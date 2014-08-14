@@ -80,13 +80,13 @@ public class RssHandler extends DefaultHandler {
         if (currentItem != null) {
             //If parsingTitle is true, then that means we are inside a <title> tag so the text is the title of an item.
             if (parsingTitle)
-                currentItem.setTitle(new String(ch, start, length));
+                currentItem.appendTitle(new String(ch, start, length));
                 //If parsingLink is true, then that means we are inside a <link> tag so the text is the link of an item.
             else if (parsingLink)
                 currentItem.setLink(new String(ch, start, length));
                 //If parsingDescription is true, then that means we are inside a <description> tag so the text is the description of an item.
             else if (parsingDescription)
-                currentItem.setDescription(new String(ch, start, length));
+                currentItem.appendDescription(new String(ch, start, length));
         }
     }
 }

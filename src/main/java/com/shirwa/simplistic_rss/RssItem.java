@@ -45,12 +45,23 @@ public class RssItem {
     public void setLink(String link) {
         this.link = link;
     }
-
     public void setDescription(String description) {
         this.description = description;
     }
 
     public void setTitle(String title) {
         this.title = title;
+    }
+    
+    public void appendDescription(String description) {
+        if (this.description == null)
+            this.description = "";
+        this.description += description;
+    }
+
+    public void appendTitle(String title) {
+        if (this.title == null)
+            this.title = "";
+        this.title += title;
     }
 }

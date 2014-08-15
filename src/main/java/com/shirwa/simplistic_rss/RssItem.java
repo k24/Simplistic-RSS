@@ -35,6 +35,7 @@ public class RssItem {
     // Description but only first X chars without formatting
     int snippetLen = 200;
     String snippet;
+    String plainTitle;
 
     public String getDescription() {
         return description;
@@ -94,15 +95,24 @@ public class RssItem {
     }
 
     public String getSnippet() {
-        if (snippet == null) {
+        if (snippet == null && description != null && !description.isEmpty()) {
             if (snippetLen > description.length()) {
                 snippetLen = description.length();
             }
             snippet = description.replaceAll(tagPattern, "")
                               .replaceAll("\\s+", " ")
                               .substring(0, snippetLen) + "...";
+            snippet = android.text.Html.fromHtml(snippet).toString().trim();
         }
 
         return snippet;
+    }
+
+    public String getPlainTitle() {
+        if (plainTitle == null && this.title != null) {
+            plainTitle = android.text.Html.fromHtml(this.title).toString()
+                    .trim();
+        }
+        return plainTitle;
     }
 }

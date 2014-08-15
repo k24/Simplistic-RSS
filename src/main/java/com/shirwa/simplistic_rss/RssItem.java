@@ -33,7 +33,7 @@ public class RssItem {
     boolean notLookedForImg = true;
 
     // Description but only first X chars without formatting
-    final int snippetLen = 200;
+    int snippetLen = 200;
     String snippet;
 
     public String getDescription() {
@@ -95,6 +95,9 @@ public class RssItem {
 
     public String getSnippet() {
         if (snippet == null) {
+            if (snippetLen > description.length()) {
+                snippetLen = description.length();
+            }
             snippet = description.replaceAll(tagPattern, "")
                               .replaceAll("\\s+", " ")
                               .substring(0, snippetLen) + "...";

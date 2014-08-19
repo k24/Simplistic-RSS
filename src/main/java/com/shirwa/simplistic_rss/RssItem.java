@@ -41,6 +41,10 @@ public class RssItem {
         return description;
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public String getImageUrl() {
         if (imageUrl != null) {
             return imageUrl;
@@ -64,20 +68,16 @@ public class RssItem {
         return title;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     public String getLink() {
         return link;
     }
 
     public void setLink(String link) {
         this.link = link;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     public void appendDescription(String description) {
@@ -96,13 +96,18 @@ public class RssItem {
 
     public String getSnippet() {
         if (snippet == null && description != null && !description.isEmpty()) {
-            if (snippetLen > description.length()) {
-                snippetLen = description.length();
-            }
             snippet = description.replaceAll(tagPattern, "")
-                              .replaceAll("\\s+", " ")
-                              .substring(0, snippetLen) + "...";
-            snippet = android.text.Html.fromHtml(snippet).toString().trim();
+                    .replaceAll("\\s+", " ");
+            if (snippetLen > snippet.length()) {
+                snippetLen = snippet.length();
+            }
+            if (snippetLen == 0) {
+                // done
+                snippet = null;
+            } else {
+                snippet = snippet.substring(0, snippetLen) + "...";
+                snippet = android.text.Html.fromHtml(snippet).toString().trim();
+            }
         }
 
         return snippet;
@@ -110,8 +115,8 @@ public class RssItem {
 
     public String getPlainTitle() {
         if (plainTitle == null && this.title != null) {
-            plainTitle = android.text.Html.fromHtml(this.title).toString()
-                    .trim();
+            plainTitle =
+                    android.text.Html.fromHtml(this.title).toString().trim();
         }
         return plainTitle;
     }

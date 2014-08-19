@@ -1,8 +1,16 @@
 package com.shirwa.simplistic_rss;
 
+import android.net.http.AndroidHttpClient;
+import android.util.Log;
+
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.xml.sax.InputSource;
+
+import java.util.List;
+
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.util.List;
 
 /*
  * Copyright (C) 2014 Shirwa Mohamed <shirwa99@gmail.com>
@@ -24,7 +32,11 @@ public class RssReader {
     private String rssUrl;
 
     public RssReader(String url) {
-        rssUrl = url;
+        if (!url.startsWith("http")) {
+            rssUrl = "http://" + url;
+        } else {
+            rssUrl = url;
+        }
     }
 
     public List<RssItem> getItems() throws Exception {
@@ -32,8 +44,18 @@ public class RssReader {
         SAXParser saxParser = factory.newSAXParser();
         //Creates a new RssHandler which will do all the parsing.
         RssHandler handler = new RssHandler();
-        //Pass SaxParser the RssHandler that was created.
-        saxParser.parse(rssUrl, handler);
-        return handler.getRssItemList();
+        //Need to take care of gzip encoded content ourselves
+        HttpUriRequest request = new HttpGet(rssUrl);
+        AndroidHttpClient.modifyRequestToAcceptGzipResponse(request);
+        AndroidHttpClient client = AndroidHttpClient.newInstance("");
+        InputSource is = new InputSource(AndroidHttpClient
+                .getUngzippedContent(client.execute(request).getEntity()));
+        //Pass SaxParser the inputsource and handler that was created.
+        saxParser.parse(is, handler);
+        //Parse the stream
+        List<RssItem> items = handler.getRssItemList();
+        // Close http client last
+        client.close();
+        return items;
     }
 }

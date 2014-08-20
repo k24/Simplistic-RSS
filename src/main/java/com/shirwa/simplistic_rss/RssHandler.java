@@ -44,49 +44,59 @@ public class RssHandler extends DefaultHandler {
 
     //Called when an opening tag is reached, such as <item> or <title>
     @Override
-    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-        if (qName.equals("item"))
+    public void startElement(String uri, String localName, String qName,
+            Attributes attributes) throws SAXException {
+        if (qName.equals("item")) {
             currentItem = new RssItem();
-        else if (qName.equals("title"))
+        } else if (qName.equals("title")) {
             parsingTitle = true;
-        else if (qName.equals("link"))
+        } else if (qName.equals("link")) {
             parsingLink = true;
-        else if (qName.equals("description"))
+        } else if (qName.equals("description")) {
             parsingDescription = true;
-        else if (qName.equals("media:thumbnail") || qName.equals("media:content") || qName.equals("image")) {
-            if (attributes.getValue("url") != null)
+        } else if (qName.equals("media:thumbnail") ||
+                   qName.equals("media:content") ||
+                   qName.equals("image")) {
+            if (attributes.getValue("url") != null) {
                 currentItem.setImageUrl(attributes.getValue("url"));
+            }
         }
     }
 
     //Called when a closing tag is reached, such as </item> or </title>
     @Override
-    public void endElement(String uri, String localName, String qName) throws SAXException {
+    public void endElement(String uri, String localName, String qName)
+            throws SAXException {
         if (qName.equals("item")) {
             //End of an item so add the currentItem to the list of items.
             rssItemList.add(currentItem);
             currentItem = null;
-        } else if (qName.equals("title"))
+        } else if (qName.equals("title")) {
             parsingTitle = false;
-        else if (qName.equals("link"))
+        } else if (qName.equals("link")) {
             parsingLink = false;
-        else if (qName.equals("description"))
+        } else if (qName.equals("description")) {
             parsingDescription = false;
+        }
     }
 
     //Goes through character by character when parsing whats inside of a tag.
     @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
+    public void characters(char[] ch, int start, int length)
+            throws SAXException {
         if (currentItem != null) {
             //If parsingTitle is true, then that means we are inside a <title> tag so the text is the title of an item.
-            if (parsingTitle)
+            if (parsingTitle) {
                 currentItem.appendTitle(new String(ch, start, length));
-                //If parsingLink is true, then that means we are inside a <link> tag so the text is the link of an item.
-            else if (parsingLink)
+            }
+            //If parsingLink is true, then that means we are inside a <link> tag so the text is the link of an item.
+            else if (parsingLink) {
                 currentItem.setLink(new String(ch, start, length));
-                //If parsingDescription is true, then that means we are inside a <description> tag so the text is the description of an item.
-            else if (parsingDescription)
+            }
+            //If parsingDescription is true, then that means we are inside a <description> tag so the text is the description of an item.
+            else if (parsingDescription) {
                 currentItem.appendDescription(new String(ch, start, length));
+            }
         }
     }
 }

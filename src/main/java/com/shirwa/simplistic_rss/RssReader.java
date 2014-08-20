@@ -7,7 +7,13 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.xml.sax.InputSource;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -40,22 +46,32 @@ public class RssReader {
     }
 
     public List<RssItem> getItems() throws Exception {
-        SAXParserFactory factory = SAXParserFactory.newInstance();
-        SAXParser saxParser = factory.newSAXParser();
-        //Creates a new RssHandler which will do all the parsing.
-        RssHandler handler = new RssHandler();
-        //Need to take care of gzip encoded content ourselves
-        HttpUriRequest request = new HttpGet(rssUrl);
-        AndroidHttpClient.modifyRequestToAcceptGzipResponse(request);
-        AndroidHttpClient client = AndroidHttpClient.newInstance("");
-        InputSource is = new InputSource(AndroidHttpClient
-                .getUngzippedContent(client.execute(request).getEntity()));
-        //Pass SaxParser the inputsource and handler that was created.
-        saxParser.parse(is, handler);
-        //Parse the stream
-        List<RssItem> items = handler.getRssItemList();
-        // Close http client last
-        client.close();
+        List<RssItem> items = null;
+        AndroidHttpClient client = null;
+        try {
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            SAXParser saxParser = factory.newSAXParser();
+            //Creates a new RssHandler which will do all the parsing.
+            RssHandler handler = new RssHandler();
+            //Need to take care of gzip encoded content ourselves
+            URL url = new URL(rssUrl);
+            InputStream istream = url.openStream();
+            InputSource is = new InputSource(istream);
+            if (is.getEncoding() != null && is.getEncoding().equalsIgnoreCase
+                    ("gzip")) {
+                is = new InputSource(new GZIPInputStream(istream));
+            }
+            //Pass SaxParser the inputsource and handler that was created.
+            saxParser.parse(is, handler);
+            //Parse the stream
+            items = handler.getRssItemList();
+        } finally {
+            // Close http client last
+            if (client != null) {
+                client.close();
+            }
+        }
+
         return items;
     }
 }

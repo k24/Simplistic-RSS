@@ -1,6 +1,8 @@
 package com.shirwa.simplistic_rss;
 
 
+import android.util.Log;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -31,6 +33,10 @@ public class RssHandler extends DefaultHandler {
     private boolean parsingTitle;
     private boolean parsingLink;
     private boolean parsingDescription;
+    private boolean parsingDate;
+
+    // Temp values
+    StringBuilder tempDate;
 
     public RssHandler() {
         //Initializes a new ArrayList that will hold all the generated RSS items.
@@ -60,6 +66,9 @@ public class RssHandler extends DefaultHandler {
             if (attributes.getValue("url") != null) {
                 currentItem.setImageUrl(attributes.getValue("url"));
             }
+        } else if (qName.equals("pubDate")) {
+            parsingDate = true;
+            tempDate = new StringBuilder();
         }
     }
 
@@ -77,6 +86,12 @@ public class RssHandler extends DefaultHandler {
             parsingLink = false;
         } else if (qName.equals("description")) {
             parsingDescription = false;
+        } else if (qName.equals("pubDate")) {
+            parsingDate = false;
+            currentItem.setPubDate(Utils.parseDate(tempDate.toString()));
+            if (currentItem.getPubDate() != null) {
+                Log.d("JONAS", "Date: " + currentItem.getPubDate().toString());
+            }
         }
     }
 
@@ -96,6 +111,8 @@ public class RssHandler extends DefaultHandler {
             //If parsingDescription is true, then that means we are inside a <description> tag so the text is the description of an item.
             else if (parsingDescription) {
                 currentItem.appendDescription(new String(ch, start, length));
+            } else if (parsingDate) {
+                tempDate.append(ch, start, length);
             }
         }
     }

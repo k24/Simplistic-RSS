@@ -1,5 +1,7 @@
 package com.shirwa.simplistic_rss;
 
+import org.joda.time.DateTime;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,6 +32,16 @@ public class RssItem {
     String description;
     String link;
     String imageUrl;
+
+    public DateTime getPubDate() {
+        return pubDate;
+    }
+
+    public void setPubDate(final DateTime pubDate) {
+        this.pubDate = pubDate;
+    }
+
+    DateTime pubDate;
     boolean notLookedForImg = true;
 
     // Description but only first X chars without formatting

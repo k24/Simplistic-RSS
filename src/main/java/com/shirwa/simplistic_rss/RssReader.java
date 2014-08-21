@@ -3,12 +3,16 @@ package com.shirwa.simplistic_rss;
 import android.net.http.AndroidHttpClient;
 import android.util.Log;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.xml.sax.InputSource;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -54,13 +58,15 @@ public class RssReader {
             //Creates a new RssHandler which will do all the parsing.
             RssHandler handler = new RssHandler();
             //Need to take care of gzip encoded content ourselves
-            URL url = new URL(rssUrl);
-            InputStream istream = url.openStream();
-            InputSource is = new InputSource(istream);
-            if (is.getEncoding() != null && is.getEncoding().equalsIgnoreCase
-                    ("gzip")) {
-                is = new InputSource(new GZIPInputStream(istream));
-            }
+            HttpUriRequest request = new HttpGet(rssUrl);
+            AndroidHttpClient.modifyRequestToAcceptGzipResponse(request);
+            client = AndroidHttpClient.newInstance(System.getProperty("http" +
+                                                                  ".agent"));
+            HttpResponse response = client.execute(request);
+            InputStream inputStream = AndroidHttpClient.getUngzippedContent
+                    (response.getEntity());
+            InputSource is = new InputSource(new BufferedInputStream
+                    (inputStream));
             //Pass SaxParser the inputsource and handler that was created.
             saxParser.parse(is, handler);
             //Parse the stream

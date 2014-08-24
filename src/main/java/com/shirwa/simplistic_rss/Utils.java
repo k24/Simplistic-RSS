@@ -1,7 +1,5 @@
 package com.shirwa.simplistic_rss;
 
-import android.util.Log;
-
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
@@ -78,7 +76,7 @@ public class Utils {
                 DateTime dt = new DateTime(javadate, DateTimeZone.UTC);
                 return dt;
             } catch (ParseException e) {
-                Log.e(TAG, "" + e.getMessage());
+                //Log.e(TAG, "" + e.getMessage());
             }
         }
 

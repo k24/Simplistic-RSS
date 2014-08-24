@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
  * limitations under the License.
  */
 
-public class RssItem {
+public class RssItem implements RssThing {
     static final String tagPattern = "<[^>]*>";
     // < = &lt;, > = &gt; URL in Group 3
     static final Pattern imgPattern =

@@ -28,6 +28,8 @@ import java.util.List;
 
 
 public class RssHandler extends DefaultHandler {
+    private RssThing thing;
+    private RssFeed rssFeed;
     private List<RssItem> rssItemList;
     private RssItem currentItem;
     private boolean parsingTitle;
@@ -41,10 +43,16 @@ public class RssHandler extends DefaultHandler {
     public RssHandler() {
         //Initializes a new ArrayList that will hold all the generated RSS items.
         rssItemList = new ArrayList<RssItem>();
+        rssFeed = new RssFeed(rssItemList);
+        thing = rssFeed;
     }
 
     public List<RssItem> getRssItemList() {
         return rssItemList;
+    }
+
+    public RssFeed getRssFeed() {
+        return rssFeed;
     }
 
 
@@ -52,18 +60,20 @@ public class RssHandler extends DefaultHandler {
     @Override
     public void startElement(String uri, String localName, String qName,
             Attributes attributes) throws SAXException {
-        if (qName.equals("item")) {
+        // RSS or Atom
+        if (qName.equals("item") || qName.equals("entry")) {
             currentItem = new RssItem();
+            thing = currentItem;
         } else if (qName.equals("title")) {
             parsingTitle = true;
         } else if (qName.equals("link")) {
             parsingLink = true;
-        } else if (qName.equals("description")) {
+        } else if (qName.equals("description") || qName.equals("summary")) {
             parsingDescription = true;
         } else if (qName.equals("media:thumbnail") ||
                    qName.equals("media:content") ||
                    qName.equals("image")) {
-            if (attributes.getValue("url") != null) {
+            if (attributes.getValue("url") != null && currentItem != null) {
                 currentItem.setImageUrl(attributes.getValue("url"));
             }
         } else if (qName.equals("pubDate")) {
@@ -80,6 +90,7 @@ public class RssHandler extends DefaultHandler {
             //End of an item so add the currentItem to the list of items.
             rssItemList.add(currentItem);
             currentItem = null;
+            thing = null;
         } else if (qName.equals("title")) {
             parsingTitle = false;
         } else if (qName.equals("link")) {
@@ -88,9 +99,8 @@ public class RssHandler extends DefaultHandler {
             parsingDescription = false;
         } else if (qName.equals("pubDate")) {
             parsingDate = false;
-            currentItem.setPubDate(Utils.parseDate(tempDate.toString()));
-            if (currentItem.getPubDate() != null) {
-                Log.d("JONAS", "Date: " + currentItem.getPubDate().toString());
+            if (thing != null) {
+                thing.setPubDate(Utils.parseDate(tempDate.toString()));
             }
         }
     }
@@ -99,22 +109,23 @@ public class RssHandler extends DefaultHandler {
     @Override
     public void characters(char[] ch, int start, int length)
             throws SAXException {
-        if (currentItem != null) {
             //If parsingTitle is true, then that means we are inside a <title> tag so the text is the title of an item.
             if (parsingTitle) {
-                currentItem.appendTitle(new String(ch, start, length));
+                if (thing != null)
+                    thing.appendTitle(new String(ch, start, length));
             }
             //If parsingLink is true, then that means we are inside a <link> tag so the text is the link of an item.
             else if (parsingLink) {
-                currentItem.setLink(new String(ch, start, length));
+                if (thing != null)
+                    thing.setLink(new String(ch, start, length));
             }
             //If parsingDescription is true, then that means we are inside a <description> tag so the text is the description of an item.
             else if (parsingDescription) {
-                currentItem.appendDescription(new String(ch, start, length));
+                if (thing != null)
+                    thing.appendDescription(new String(ch, start, length));
             } else if (parsingDate) {
                 tempDate.append(ch, start, length);
             }
-        }
     }
 }
 

@@ -1,10 +1,14 @@
 package com.shirwa.simplistic_rss;
 
 import android.net.http.AndroidHttpClient;
+import android.util.Log;
 
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.params.ClientPNames;
+import org.apache.http.params.HttpParams;
 import org.xml.sax.InputSource;
 
 import java.io.BufferedInputStream;
@@ -41,28 +45,38 @@ public class RssReader {
         }
     }
 
-    public List<RssItem> getItems() throws Exception {
-        List<RssItem> items = null;
+    public RssFeed getFeed() throws Exception {
+        RssFeed feed = null;
         AndroidHttpClient client = null;
         try {
+            // Need a SAXParser to read the XML
             SAXParserFactory factory = SAXParserFactory.newInstance();
             SAXParser saxParser = factory.newSAXParser();
-            //Creates a new RssHandler which will do all the parsing.
+            // Creates a new RssHandler which will do all the parsing.
             RssHandler handler = new RssHandler();
-            //Need to take care of gzip encoded content ourselves
+            // Need to take care of gzip encoded content ourselves
             HttpUriRequest request = new HttpGet(rssUrl);
             AndroidHttpClient.modifyRequestToAcceptGzipResponse(request);
             client = AndroidHttpClient
                     .newInstance(System.getProperty("http" + ".agent"));
+            Log.d("JONAS", "Request: " + request.getMethod());
+            // For some shit reason, I need to set redirects to true myself
+            HttpParams params = request.getParams();
+            params.setParameter(ClientPNames.HANDLE_REDIRECTS, true);
+            request.setParams(params);
+            // Actually send it...
             HttpResponse response = client.execute(request);
+            Log.d("JONAS", "Response: " + response.getStatusLine()
+                    .getStatusCode() + ": " + response.getStatusLine().getReasonPhrase());
+            // Decode the response
             InputStream inputStream =
                     AndroidHttpClient.getUngzippedContent(response.getEntity());
             InputSource is =
                     new InputSource(new BufferedInputStream(inputStream));
-            //Pass SaxParser the inputsource and handler that was created.
+            // Pass SaxParser the inputsource and handler that was created.
             saxParser.parse(is, handler);
-            //Parse the stream
-            items = handler.getRssItemList();
+            // Parse the stream
+            feed = handler.getRssFeed();
         } finally {
             // Close http client last
             if (client != null) {
@@ -70,6 +84,6 @@ public class RssReader {
             }
         }
 
-        return items;
+        return feed;
     }
 }

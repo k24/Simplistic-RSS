@@ -117,7 +117,8 @@ public class RssItem implements RssThing {
                 // done
                 snippet = null;
             } else {
-                snippet = snippet.substring(0, snippetLen) + "...";
+                // Unicode ellipsis instead of three dots ...
+                snippet = snippet.substring(0, snippetLen) + "\u2026";
                 snippet = android.text.Html.fromHtml(snippet).toString().trim();
             }
         }

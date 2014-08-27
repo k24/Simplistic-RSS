@@ -2,6 +2,8 @@ package com.shirwa.simplistic_rss;
 
 import org.joda.time.DateTime;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,6 +34,12 @@ public class RssItem implements RssThing {
     String description;
     String link;
     String imageUrl;
+    DateTime pubDate;
+    boolean notLookedForImg = true;
+    // Description but only first X chars without formatting
+    int snippetLen = 200;
+    String snippet;
+    String plainTitle;
 
     public DateTime getPubDate() {
         return pubDate;
@@ -41,13 +49,19 @@ public class RssItem implements RssThing {
         this.pubDate = pubDate;
     }
 
-    DateTime pubDate;
-    boolean notLookedForImg = true;
+    public void appendTitle(String title) {
+        if (this.title == null) {
+            this.title = "";
+        }
+        this.title += title;
+    }
 
-    // Description but only first X chars without formatting
-    int snippetLen = 200;
-    String snippet;
-    String plainTitle;
+    public void appendDescription(String description) {
+        if (this.description == null) {
+            this.description = "";
+        }
+        this.description += description;
+    }
 
     public String getDescription() {
         return description;
@@ -76,6 +90,20 @@ public class RssItem implements RssThing {
         this.imageUrl = imageUrl;
     }
 
+    /**
+     * Return a list of all images in the body
+     */
+    public List<String> getAllImageUrls() {
+        ArrayList<String> urlList = new ArrayList<String>();
+        if (description != null) {
+            Matcher m = imgPattern.matcher(description);
+            while (m.find()) {
+                urlList.add(m.group(3));
+            }
+        }
+        return urlList;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -90,20 +118,6 @@ public class RssItem implements RssThing {
 
     public void setLink(String link) {
         this.link = link;
-    }
-
-    public void appendDescription(String description) {
-        if (this.description == null) {
-            this.description = "";
-        }
-        this.description += description;
-    }
-
-    public void appendTitle(String title) {
-        if (this.title == null) {
-            this.title = "";
-        }
-        this.title += title;
     }
 
     public String getSnippet() {

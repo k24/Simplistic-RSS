@@ -30,8 +30,29 @@ public class RssItem implements RssThing {
             Pattern.compile("(&lt;|<)img.*?src=(\"|')(.*?)(\"|')",
                     Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
+    // Bloat patterns, are removed from description
+    static final Pattern[] bloatPatterns = new Pattern[]{
+            // Remove feedflare div
+            Pattern.compile(
+                    "(<|&lt;)div class=('|\")feedflare('|\").*?/div(>|&gt;)",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL),
+            // Remove feedsportal links
+            Pattern.compile(
+                    "(<|&lt;)a((?!/a).)*feedsportal.*?/a(>|gt;)",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL),
+            // Remove links containing zero size images
+            Pattern.compile(
+                    "(<|&lt;)a((?!/a).)*width=('|\")1('|\")((?!/a).)*/a(>|&gt;)",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL),
+            // Remove zero size images
+            Pattern.compile(
+                    "(<|&lt;)img((?!/((>|&gt;)|img)).)*width=('|\")1('|\").*?/(img)?(>|&gt;)",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL),
+    };
+
     String title;
     String description;
+    String cleanDescription;
     String link;
     String imageUrl;
     DateTime pubDate;
@@ -69,6 +90,21 @@ public class RssItem implements RssThing {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    /**
+     *
+     * @return description without bloat, ads, and spam
+     */
+    public String getCleanDescription() {
+        if (cleanDescription == null && description != null) {
+            cleanDescription = description;
+            for (Pattern p: bloatPatterns) {
+                cleanDescription = p.matcher(cleanDescription).replaceAll("");
+            }
+        }
+
+        return cleanDescription;
     }
 
     public String getImageUrl() {

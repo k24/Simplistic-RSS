@@ -29,7 +29,21 @@ public class RssItem implements RssThing {
     static final Pattern imgPattern =
             Pattern.compile("(&lt;|<)img.*?src=(\"|')(.*?)(\"|')",
                     Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-
+    // Empty paragraphs
+    static final Pattern emptyParagraphs =
+    Pattern.compile(
+            "(((<|&lt;)(p)(>|&gt;))\\s*((<|&lt;)/p(>|&gt;))|(<|&lt;)p/(>|&gt;))",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    static final Pattern manyNewlines =
+            // Two or more newlines gets truncated to one
+            Pattern.compile(
+            "(((<|&lt;)/?br/?(>|&gt;))\\s*){2,}",
+    Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    static final Pattern newlinesFollowingParagraph =
+            // <p/><br/>, remove all such br
+            Pattern.compile(
+            "((<|&lt;)/?p/?(>|&gt;))(\\s*(<|&lt;)/?br/?(>|&gt;))+",
+            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     // Bloat patterns, are removed from description
     static final Pattern[] bloatPatterns = new Pattern[]{
             // Remove feedflare div
@@ -48,6 +62,7 @@ public class RssItem implements RssThing {
             Pattern.compile(
                     "(<|&lt;)img((?!/((>|&gt;)|img)).)*width=('|\")1('|\").*?/(img)?(>|&gt;)",
                     Pattern.CASE_INSENSITIVE | Pattern.DOTALL),
+
     };
 
     String title;
@@ -102,6 +117,16 @@ public class RssItem implements RssThing {
             for (Pattern p: bloatPatterns) {
                 cleanDescription = p.matcher(cleanDescription).replaceAll("");
             }
+            // We might have introduced some empty lines now
+            // Remove empty paragraphs
+            cleanDescription = emptyParagraphs.matcher(cleanDescription).replaceAll("");
+            // Replace many newlines with just one
+            cleanDescription = manyNewlines.matcher(cleanDescription)
+                    .replaceAll("<br/>");
+            // Get rid of newlines following paragraphs,
+            // first group is paragraph
+            cleanDescription = newlinesFollowingParagraph.matcher
+                    (cleanDescription).replaceAll("$1");
         }
 
         return cleanDescription;

@@ -139,7 +139,7 @@ public class RssItem implements RssThing {
         if (notLookedForImg && description != null) {
             notLookedForImg = false;
             // Try and find an image in the item
-            Matcher m = imgPattern.matcher(description);
+            Matcher m = imgPattern.matcher(getCleanDescription());
             if (m.find()) {
                 imageUrl = m.group(3);
             }

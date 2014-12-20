@@ -31,19 +31,19 @@ public class RssItem implements RssThing {
                     Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     // Empty paragraphs
     static final Pattern emptyParagraphs =
-    Pattern.compile(
-            "(((<|&lt;)(p)(>|&gt;))\\s*((<|&lt;)/p(>|&gt;))|(<|&lt;)p/(>|&gt;))",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+            Pattern.compile(
+                    "(((<|&lt;)(p)(>|&gt;))\\s*((<|&lt;)/p(>|&gt;))|(<|&lt;)p/(>|&gt;))",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     static final Pattern manyNewlines =
             // Two or more newlines gets truncated to one
             Pattern.compile(
-            "(((<|&lt;)/?br/?(>|&gt;))\\s*){2,}",
-    Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+                    "(((<|&lt;)/?br/?(>|&gt;))\\s*){2,}",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     static final Pattern newlinesFollowingParagraph =
             // <p/><br/>, remove all such br
             Pattern.compile(
-            "((<|&lt;)/?p/?(>|&gt;))(\\s*(<|&lt;)/?br/?(>|&gt;))+",
-            Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+                    "((<|&lt;)/?p/?(>|&gt;))(\\s*(<|&lt;)/?br/?(>|&gt;))+",
+                    Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     // Bloat patterns, are removed from description
     static final Pattern[] bloatPatterns = new Pattern[]{
             // Remove feedflare div
@@ -69,6 +69,8 @@ public class RssItem implements RssThing {
     String description;
     String cleanDescription;
     String link;
+    String author;
+    String enclosure;
     String imageUrl;
     DateTime pubDate;
     boolean notLookedForImg = true;
@@ -76,6 +78,26 @@ public class RssItem implements RssThing {
     int snippetLen = 200;
     String snippet;
     String plainTitle;
+
+    public String getAuthor() {
+        return author;
+    }
+
+    @Override
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getEnclosure() {
+        return enclosure;
+    }
+
+    @Override
+    public void setEnclosure(String enclosure) {
+        // Only if no enclosure already exists, and new is not null
+        if (enclosure != null && !enclosure.isEmpty() && (this.enclosure == null || this.enclosure.isEmpty()))
+            this.enclosure = enclosure;
+    }
 
     public DateTime getPubDate() {
         return pubDate;
@@ -96,7 +118,9 @@ public class RssItem implements RssThing {
         if (this.description == null) {
             this.description = "";
         }
-        this.description += description;
+        // Only append longer versions (there can be several kinds)
+        if (description != null && description.length() > this.description.length())
+            this.description += description;
     }
 
     public String getDescription() {
@@ -108,13 +132,12 @@ public class RssItem implements RssThing {
     }
 
     /**
-     *
      * @return description without bloat, ads, and spam
      */
     public String getCleanDescription() {
         if (cleanDescription == null && description != null) {
             cleanDescription = description;
-            for (Pattern p: bloatPatterns) {
+            for (Pattern p : bloatPatterns) {
                 cleanDescription = p.matcher(cleanDescription).replaceAll("");
             }
             // We might have introduced some empty lines now
@@ -178,7 +201,8 @@ public class RssItem implements RssThing {
     }
 
     public void setLink(String link) {
-        this.link = link;
+        if (link != null && !link.isEmpty())
+            this.link = link;
     }
 
     public String getSnippet() {

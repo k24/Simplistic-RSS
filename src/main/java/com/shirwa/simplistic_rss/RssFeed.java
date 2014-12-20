@@ -44,6 +44,11 @@ public class RssFeed implements RssThing {
         this.link = link;
     }
 
+    @Override
+    public void setEnclosure(String s) {
+        // Not a thing for feeds
+    }
+
     public DateTime getPubDate() {
         return pubDate;
     }
@@ -57,6 +62,11 @@ public class RssFeed implements RssThing {
             this.description = "";
         }
         this.description += description;
+    }
+
+    @Override
+    public void setAuthor(String s) {
+        // Not a thing for feeds
     }
 
     public void appendTitle(String title) {

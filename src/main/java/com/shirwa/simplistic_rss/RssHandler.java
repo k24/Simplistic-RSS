@@ -34,6 +34,8 @@ public class RssHandler extends DefaultHandler {
     private RssItem currentItem;
     private boolean parsingTitle;
     private boolean parsingLink;
+    private boolean parsingEnclosureLink;
+    private boolean parsingAuthor;
     private boolean parsingDescription;
     private boolean parsingDate;
 
@@ -66,9 +68,7 @@ public class RssHandler extends DefaultHandler {
             thing = currentItem;
         } else if (qName.equals("title")) {
             parsingTitle = true;
-        } else if (qName.equals("link")) {
-            parsingLink = true;
-        } else if (qName.equals("description") || qName.equals("summary")) {
+        } else if (qName.equals("description") || qName.equals("summary") || qName.equals("content") || qName.equals("content:encoded") || qName.equals("body") || qName.equals("fullitem") || qName.equals("xhtml:body")) {
             parsingDescription = true;
         } else if (qName.equals("media:thumbnail") ||
                    qName.equals("media:content") ||
@@ -79,6 +79,21 @@ public class RssHandler extends DefaultHandler {
         } else if (qName.equals("pubDate")) {
             parsingDate = true;
             tempDate = new StringBuilder();
+        } else if (qName.equals("author") || qName.equals("creator")) {
+            parsingAuthor = true;
+        } else if (qName.equals("enclosure") ||
+                qName.equals("link") && attributes.getValue("rel") != null) {
+            parsingEnclosureLink = true;
+            if (attributes.getValue("url") != null)
+                thing.setEnclosure(attributes.getValue("url"));
+            else if (attributes.getValue("href") != null)
+                thing.setEnclosure(attributes.getValue("href"));
+        } else if (qName.equals("link")) {
+            parsingLink = true;
+            if (attributes.getValue("url") != null)
+                thing.setLink(attributes.getValue("url"));
+            else if (attributes.getValue("href") != null)
+                thing.setLink(attributes.getValue("href"));
         }
     }
 
@@ -95,6 +110,11 @@ public class RssHandler extends DefaultHandler {
             parsingTitle = false;
         } else if (qName.equals("link")) {
             parsingLink = false;
+            parsingEnclosureLink = false;
+        } else if (qName.equals("enclosure")) {
+            parsingEnclosureLink = false;
+        } else if (qName.equals("author") || qName.equals("creator")) {
+            parsingAuthor = false;
         } else if (qName.equals("description")) {
             parsingDescription = false;
         } else if (qName.equals("pubDate")) {
@@ -109,23 +129,31 @@ public class RssHandler extends DefaultHandler {
     @Override
     public void characters(char[] ch, int start, int length)
             throws SAXException {
-            //If parsingTitle is true, then that means we are inside a <title> tag so the text is the title of an item.
-            if (parsingTitle) {
-                if (thing != null)
-                    thing.appendTitle(new String(ch, start, length));
-            }
-            //If parsingLink is true, then that means we are inside a <link> tag so the text is the link of an item.
-            else if (parsingLink) {
-                if (thing != null)
-                    thing.setLink(new String(ch, start, length));
-            }
-            //If parsingDescription is true, then that means we are inside a <description> tag so the text is the description of an item.
-            else if (parsingDescription) {
-                if (thing != null)
-                    thing.appendDescription(new String(ch, start, length));
-            } else if (parsingDate) {
-                tempDate.append(ch, start, length);
-            }
+        //If parsingTitle is true, then that means we are inside a <title> tag so the text is the title of an item.
+        if (parsingTitle) {
+            if (thing != null)
+                thing.setTitle(new String(ch, start, length));
+        }
+        else if (parsingAuthor) {
+            if (thing != null)
+                thing.setAuthor(new String(ch, start, length));
+        }
+        //If parsingLink is true, then that means we are inside a <link> tag so the text is the link of an item.
+        else if (parsingLink) {
+            if (thing != null)
+                thing.setLink(new String(ch, start, length));
+        }
+        else if (parsingEnclosureLink) {
+            if (thing != null)
+                thing.setEnclosure(new String(ch, start, length));
+        }
+        //If parsingDescription is true, then that means we are inside a <description> tag so the text is the description of an item.
+        else if (parsingDescription) {
+            if (thing != null)
+                thing.setDescription(new String(ch, start, length));
+        } else if (parsingDate) {
+            tempDate.append(ch, start, length);
+        }
     }
 }
 

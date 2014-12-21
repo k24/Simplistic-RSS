@@ -68,7 +68,7 @@ public class RssHandler extends DefaultHandler {
             thing = currentItem;
         } else if (qName.equals("title")) {
             parsingTitle = true;
-        } else if (qName.equals("description") || qName.equals("summary") || qName.equals("content") || qName.equals("content:encoded") || qName.equals("body") || qName.equals("fullitem") || qName.equals("xhtml:body")) {
+        } else if (isDescription(qName)) {
             parsingDescription = true;
         } else if (qName.equals("media:thumbnail") ||
                    qName.equals("media:content") ||
@@ -79,10 +79,9 @@ public class RssHandler extends DefaultHandler {
         } else if (qName.equals("pubDate")) {
             parsingDate = true;
             tempDate = new StringBuilder();
-        } else if (qName.equals("author") || qName.equals("creator")) {
+        } else if (isAuthor(qName)) {
             parsingAuthor = true;
-        } else if (qName.equals("enclosure") ||
-                qName.equals("link") && attributes.getValue("rel") != null) {
+        } else if (isEnclosure(qName, attributes)) {
             parsingEnclosureLink = true;
             if (attributes.getValue("url") != null)
                 thing.setEnclosure(attributes.getValue("url"));
@@ -95,6 +94,19 @@ public class RssHandler extends DefaultHandler {
             else if (attributes.getValue("href") != null)
                 thing.setLink(attributes.getValue("href"));
         }
+    }
+
+    private boolean isEnclosure(String qName, Attributes attributes) {
+        return qName.equals("enclosure") ||
+                qName.equals("link") && attributes.getValue("rel") != null;
+    }
+
+    private boolean isAuthor(String qName) {
+        return qName.equals("author") || qName.equals("dc:creator") || qName.equals("dc:author");
+    }
+
+    private boolean isDescription(String qName) {
+        return qName.equals("description") || qName.equals("summary") || qName.equals("content") || qName.equals("content:encoded") || qName.equals("body") || qName.equals("fullitem") || qName.equals("xhtml:body");
     }
 
     //Called when a closing tag is reached, such as </item> or </title>
@@ -113,9 +125,9 @@ public class RssHandler extends DefaultHandler {
             parsingEnclosureLink = false;
         } else if (qName.equals("enclosure")) {
             parsingEnclosureLink = false;
-        } else if (qName.equals("author") || qName.equals("creator")) {
+        } else if (isAuthor(qName)) {
             parsingAuthor = false;
-        } else if (qName.equals("description")) {
+        } else if (isDescription(qName)) {
             parsingDescription = false;
         } else if (qName.equals("pubDate")) {
             parsingDate = false;

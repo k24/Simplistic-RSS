@@ -24,14 +24,6 @@ public class RssFeed implements RssThing {
         return title;
     }
 
-    public void setTitle(final String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
     public void setDescription(final String description) {
         this.description = description;
     }
@@ -40,12 +32,12 @@ public class RssFeed implements RssThing {
         return link;
     }
 
-    public void setLink(final String link) {
+    public void parserSetLink(final String link) {
         this.link = link;
     }
 
     @Override
-    public void setEnclosure(String s) {
+    public void parserSetEnclosure(String s) {
         // Not a thing for feeds
     }
 
@@ -53,26 +45,24 @@ public class RssFeed implements RssThing {
         return pubDate;
     }
 
-    public void setPubDate(final DateTime pubDate) {
+    public void parserSetPubDate(final DateTime pubDate) {
         this.pubDate = pubDate;
     }
 
-    public void appendDescription(String description) {
-        if (this.description == null) {
+    public void parserSetContent(String tag, String description) {
+        if (this.description == null)
             this.description = "";
-        }
         this.description += description;
     }
 
     @Override
-    public void setAuthor(String s) {
+    public void parserSetAuthor(String s) {
         // Not a thing for feeds
     }
 
-    public void appendTitle(String title) {
-        if (this.title == null) {
+    public void parserSetTitle(String title) {
+        if (this.title == null)
             this.title = "";
-        }
         this.title += title;
     }
 }

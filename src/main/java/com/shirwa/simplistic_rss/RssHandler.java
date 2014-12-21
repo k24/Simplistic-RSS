@@ -9,6 +9,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /*
  * Copyright (C) 2014 Shirwa Mohamed <shirwa99@gmail.com>
@@ -38,6 +39,7 @@ public class RssHandler extends DefaultHandler {
     private boolean parsingAuthor;
     private boolean parsingDescription;
     private boolean parsingDate;
+    Stack<String> currentTag;
 
     // Temp values
     StringBuilder tempDate;
@@ -46,6 +48,7 @@ public class RssHandler extends DefaultHandler {
         //Initializes a new ArrayList that will hold all the generated RSS items.
         rssItemList = new ArrayList<RssItem>();
         rssFeed = new RssFeed(rssItemList);
+        currentTag = new Stack<String>();
         thing = rssFeed;
     }
 
@@ -62,6 +65,7 @@ public class RssHandler extends DefaultHandler {
     @Override
     public void startElement(String uri, String localName, String qName,
             Attributes attributes) throws SAXException {
+        currentTag.push(qName);
         // RSS or Atom
         if (qName.equals("item") || qName.equals("entry")) {
             currentItem = new RssItem();
@@ -84,15 +88,15 @@ public class RssHandler extends DefaultHandler {
         } else if (isEnclosure(qName, attributes)) {
             parsingEnclosureLink = true;
             if (attributes.getValue("url") != null)
-                thing.setEnclosure(attributes.getValue("url"));
+                thing.parserSetEnclosure(attributes.getValue("url"));
             else if (attributes.getValue("href") != null)
-                thing.setEnclosure(attributes.getValue("href"));
+                thing.parserSetEnclosure(attributes.getValue("href"));
         } else if (qName.equals("link")) {
             parsingLink = true;
             if (attributes.getValue("url") != null)
-                thing.setLink(attributes.getValue("url"));
+                thing.parserSetLink(attributes.getValue("url"));
             else if (attributes.getValue("href") != null)
-                thing.setLink(attributes.getValue("href"));
+                thing.parserSetLink(attributes.getValue("href"));
         }
     }
 
@@ -113,6 +117,7 @@ public class RssHandler extends DefaultHandler {
     @Override
     public void endElement(String uri, String localName, String qName)
             throws SAXException {
+        currentTag.pop();
         if (qName.equals("item")) {
             //End of an item so add the currentItem to the list of items.
             rssItemList.add(currentItem);
@@ -132,37 +137,37 @@ public class RssHandler extends DefaultHandler {
         } else if (qName.equals("pubDate")) {
             parsingDate = false;
             if (thing != null) {
-                thing.setPubDate(Utils.parseDate(tempDate.toString()));
+                thing.parserSetPubDate(Utils.parseDate(tempDate.toString()));
             }
         }
     }
 
-    //Goes through character by character when parsing whats inside of a tag.
+    //Goes through contents of tags
     @Override
     public void characters(char[] ch, int start, int length)
             throws SAXException {
         //If parsingTitle is true, then that means we are inside a <title> tag so the text is the title of an item.
         if (parsingTitle) {
             if (thing != null)
-                thing.setTitle(new String(ch, start, length));
+                thing.parserSetTitle(new String(ch, start, length));
         }
         else if (parsingAuthor) {
             if (thing != null)
-                thing.setAuthor(new String(ch, start, length));
+                thing.parserSetAuthor(new String(ch, start, length));
         }
         //If parsingLink is true, then that means we are inside a <link> tag so the text is the link of an item.
         else if (parsingLink) {
             if (thing != null)
-                thing.setLink(new String(ch, start, length));
+                thing.parserSetLink(new String(ch, start, length));
         }
         else if (parsingEnclosureLink) {
             if (thing != null)
-                thing.setEnclosure(new String(ch, start, length));
+                thing.parserSetEnclosure(new String(ch, start, length));
         }
         //If parsingDescription is true, then that means we are inside a <description> tag so the text is the description of an item.
         else if (parsingDescription) {
             if (thing != null)
-                thing.setDescription(new String(ch, start, length));
+                thing.parserSetContent(currentTag.peek(), new String(ch, start, length));
         } else if (parsingDate) {
             tempDate.append(ch, start, length);
         }

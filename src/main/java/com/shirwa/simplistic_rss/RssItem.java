@@ -3,6 +3,7 @@ package com.shirwa.simplistic_rss;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,7 +67,8 @@ public class RssItem implements RssThing {
     };
 
     String title;
-    String description;
+    // There are several possible content tags.
+    HashMap<String, String> content = new HashMap<String, String>();
     String cleanDescription;
     String link;
     String author;
@@ -83,8 +85,7 @@ public class RssItem implements RssThing {
         return author;
     }
 
-    @Override
-    public void setAuthor(String author) {
+    public void parserSetAuthor(String author) {
         this.author = author;
     }
 
@@ -93,7 +94,7 @@ public class RssItem implements RssThing {
     }
 
     @Override
-    public void setEnclosure(String enclosure) {
+    public void parserSetEnclosure(String enclosure) {
         // Only if no enclosure already exists, and new is not null
         if (enclosure != null && !enclosure.isEmpty() && (this.enclosure == null || this.enclosure.isEmpty()))
             this.enclosure = enclosure;
@@ -103,38 +104,46 @@ public class RssItem implements RssThing {
         return pubDate;
     }
 
-    public void setPubDate(final DateTime pubDate) {
+    public void parserSetPubDate(final DateTime pubDate) {
         this.pubDate = pubDate;
     }
 
-    public void appendTitle(String title) {
+    public void parserSetTitle(String title) {
         if (this.title == null) {
             this.title = "";
         }
         this.title += title;
     }
 
-    public void appendDescription(String description) {
-        if (this.description == null) {
-            this.description = "";
+    public void parserSetContent(String tag, String description) {
+        if (!content.containsKey(tag)) {
+            content.put(tag, "");
         }
-        // Only append longer versions (there can be several kinds)
-        if (description != null && description.length() > this.description.length())
-            this.description += description;
+        content.put(tag, content.get(tag) + description);
     }
 
+    // Returns the longest content tag
     public String getDescription() {
-        return description;
+        int longest = 0;
+        String longestTag = null;
+        for (String tag: content.keySet()) {
+            if (content.get(tag).length() > longest)
+                longestTag = tag;
+        }
+
+        if (longestTag != null) {
+            return content.get(longestTag);
+        } else {
+            return null;
+        }
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
 
     /**
      * @return description without bloat, ads, and spam
      */
     public String getCleanDescription() {
+        String description = getDescription();
         if (cleanDescription == null && description != null) {
             cleanDescription = description;
             for (Pattern p : bloatPatterns) {
@@ -159,6 +168,7 @@ public class RssItem implements RssThing {
         if (imageUrl != null) {
             return imageUrl;
         }
+        String description = getDescription();
         if (notLookedForImg && description != null) {
             notLookedForImg = false;
             // Try and find an image in the item
@@ -179,6 +189,7 @@ public class RssItem implements RssThing {
      */
     public List<String> getAllImageUrls() {
         ArrayList<String> urlList = new ArrayList<String>();
+        String description = getDescription();
         if (description != null) {
             Matcher m = imgPattern.matcher(description);
             while (m.find()) {
@@ -200,12 +211,13 @@ public class RssItem implements RssThing {
         return link;
     }
 
-    public void setLink(String link) {
+    public void parserSetLink(String link) {
         if (link != null && !link.isEmpty())
             this.link = link;
     }
 
     public String getSnippet() {
+        String description = getDescription();
         if (snippet == null && description != null && !description.isEmpty()) {
             snippet = description.replaceAll(tagPattern, "")
                     .replaceAll("\\s+", " ");

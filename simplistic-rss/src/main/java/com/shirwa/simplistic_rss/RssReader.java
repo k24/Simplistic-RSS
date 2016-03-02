@@ -1,10 +1,10 @@
 package com.shirwa.simplistic_rss;
 
-import java.io.IOException;
-import java.io.InputStream;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserFactory;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
+import java.io.IOException;
+import java.io.Reader;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -38,23 +38,27 @@ public class RssReader {
     }
 
     public RssFeed getFeed() throws Exception {
-        RssFeed feed = null;
+        // Use PullParser instead of SAXParser for performance
+        XmlPullParser parser = XmlPullParserFactory.newInstance().newPullParser();
+        parser.setInput(fetchFeed(rssUrl));
 
-        // Need a SAXParser to read the XML
-        SAXParserFactory factory = SAXParserFactory.newInstance();
-        SAXParser saxParser = factory.newSAXParser();
-        // Creates a new RssHandler which will do all the parsing.
-        RssHandler handler = new RssHandler();
-
-        // Pass SaxParser the inputsource and handler that was created.
-        saxParser.parse(fetchFeed(rssUrl), handler);
         // Parse the stream
-        feed = handler.getRssFeed();
+        RssHandler handler = new RssHandler();
+        while (parser.next() != XmlPullParser.END_DOCUMENT) {
+            switch (parser.getEventType()) {
+                case XmlPullParser.START_TAG:
+                    handler.startElement(parser);
+                    break;
+                case XmlPullParser.END_TAG:
+                    handler.endElement(parser);
+                    break;
+            }
+        }
 
-        return feed;
+        return handler.getRssFeed();
     }
 
-    private InputStream fetchFeed(String url) throws IOException {
+    private Reader fetchFeed(String url) throws IOException {
         // Support redirection as old
         OkHttpClient client = new OkHttpClient.Builder()
                 .followRedirects(true)
@@ -64,6 +68,6 @@ public class RssReader {
                 .build()).execute();
         if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
-        return response.body().byteStream();
+        return response.body().charStream();
     }
 }

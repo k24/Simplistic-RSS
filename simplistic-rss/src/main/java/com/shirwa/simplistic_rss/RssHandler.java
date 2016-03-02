@@ -1,12 +1,10 @@
 package com.shirwa.simplistic_rss;
 
 
-import android.util.Log;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -28,27 +26,21 @@ import java.util.Stack;
  */
 
 
-public class RssHandler extends DefaultHandler {
+public class RssHandler {
     private RssThing thing;
     private RssFeed rssFeed;
     private List<RssItem> rssItemList;
     private RssItem currentItem;
-    private boolean parsingTitle;
-    private boolean parsingLink;
-    private boolean parsingEnclosureLink;
-    private boolean parsingAuthor;
-    private boolean parsingDescription;
-    private boolean parsingDate;
     Stack<String> currentTag;
 
     // Temp values
-    StringBuilder tempDate;
+    String tempDate;
 
     public RssHandler() {
         //Initializes a new ArrayList that will hold all the generated RSS items.
-        rssItemList = new ArrayList<RssItem>();
+        rssItemList = new ArrayList<>();
         rssFeed = new RssFeed(rssItemList);
-        currentTag = new Stack<String>();
+        currentTag = new Stack<>();
         thing = rssFeed;
     }
 
@@ -60,49 +52,9 @@ public class RssHandler extends DefaultHandler {
         return rssFeed;
     }
 
-
-    //Called when an opening tag is reached, such as <item> or <title>
-    @Override
-    public void startElement(String uri, String localName, String qName,
-            Attributes attributes) throws SAXException {
-        currentTag.push(qName);
-        // RSS or Atom
-        if (qName.equals("item") || qName.equals("entry")) {
-            currentItem = new RssItem();
-            thing = currentItem;
-        } else if (qName.equals("title")) {
-            parsingTitle = true;
-        } else if (isDescription(qName)) {
-            parsingDescription = true;
-        } else if (qName.equals("media:thumbnail") ||
-                   qName.equals("media:content") ||
-                   qName.equals("image")) {
-            if (attributes.getValue("url") != null && currentItem != null) {
-                currentItem.setImageUrl(attributes.getValue("url"));
-            }
-        } else if (qName.equals("pubDate")) {
-            parsingDate = true;
-            tempDate = new StringBuilder();
-        } else if (isAuthor(qName)) {
-            parsingAuthor = true;
-        } else if (isEnclosure(qName, attributes)) {
-            parsingEnclosureLink = true;
-            if (attributes.getValue("url") != null)
-                thing.parserSetEnclosure(attributes.getValue("url"));
-            else if (attributes.getValue("href") != null)
-                thing.parserSetEnclosure(attributes.getValue("href"));
-        } else if (qName.equals("link")) {
-            parsingLink = true;
-            if (attributes.getValue("url") != null)
-                thing.parserSetLink(attributes.getValue("url"));
-            else if (attributes.getValue("href") != null)
-                thing.parserSetLink(attributes.getValue("href"));
-        }
-    }
-
-    private boolean isEnclosure(String qName, Attributes attributes) {
+    private boolean isEnclosure(String qName, String rel) {
         return qName.equals("enclosure") ||
-                qName.equals("link") && attributes.getValue("rel") != null;
+                qName.equals("link") && rel != null;
     }
 
     private boolean isAuthor(String qName) {
@@ -113,63 +65,73 @@ public class RssHandler extends DefaultHandler {
         return qName.equals("description") || qName.equals("summary") || qName.equals("content") || qName.equals("content:encoded") || qName.equals("body") || qName.equals("fullitem") || qName.equals("xhtml:body");
     }
 
-    //Called when a closing tag is reached, such as </item> or </title>
-    @Override
-    public void endElement(String uri, String localName, String qName)
-            throws SAXException {
+    public void startElement(XmlPullParser parser) throws IOException, XmlPullParserException {
+        String qName = parser.getName();
+
+        currentTag.push(qName);
+        // RSS or Atom
+        if (qName.equals("item") || qName.equals("entry")) {
+            currentItem = new RssItem();
+            thing = currentItem;
+        } else if (qName.equals("title")) {
+            String text = readText(parser);
+            if (thing != null) thing.parserSetTitle(text);
+        } else if (isDescription(qName)) {
+            String text = readText(parser);
+            if (thing != null)
+                thing.parserSetContent(currentTag.peek(), text);
+        } else if (qName.equals("media:thumbnail") ||
+                qName.equals("media:content") ||
+                qName.equals("image")) {
+            if (parser.getAttributeValue(null, "url") != null && currentItem != null) {
+                currentItem.setImageUrl(parser.getAttributeValue(null, "url"));
+            }
+        } else if (qName.equals("pubDate")) {
+            tempDate = readText(parser);
+        } else if (isAuthor(qName)) {
+            String text = readText(parser);
+            if (thing != null)
+                thing.parserSetAuthor(text);
+        } else if (isEnclosure(qName, parser.getAttributeValue(null, "rel"))) {
+            if (parser.getAttributeValue(null, "url") != null)
+                thing.parserSetEnclosure(parser.getAttributeValue(null, "url"));
+            else if (parser.getAttributeValue(null, "href") != null)
+                thing.parserSetEnclosure(parser.getAttributeValue(null, "href"));
+            String text = readText(parser);
+            if (thing != null)
+                thing.parserSetEnclosure(text);
+        } else if (qName.equals("link")) {
+            if (parser.getAttributeValue(null, "url") != null)
+                thing.parserSetLink(parser.getAttributeValue(null, "url"));
+            else if (parser.getAttributeValue(null, "href") != null)
+                thing.parserSetLink(parser.getAttributeValue(null, "href"));
+            String text = readText(parser);
+            if (thing != null)
+                thing.parserSetLink(text);
+        }
+
+    }
+
+    private static String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
+        if (parser.next() == XmlPullParser.TEXT) {
+            return parser.getText();
+        }
+
+        return ""; // Unexpected
+    }
+
+    public void endElement(XmlPullParser parser) {
+        String qName = parser.getName();
         currentTag.pop();
         if (qName.equals("item") || qName.equals("entry")) {
             //End of an item so add the currentItem to the list of items.
             rssItemList.add(currentItem);
             currentItem = null;
             thing = null;
-        } else if (qName.equals("title")) {
-            parsingTitle = false;
-        } else if (qName.equals("link")) {
-            parsingLink = false;
-            parsingEnclosureLink = false;
-        } else if (qName.equals("enclosure")) {
-            parsingEnclosureLink = false;
-        } else if (isAuthor(qName)) {
-            parsingAuthor = false;
-        } else if (isDescription(qName)) {
-            parsingDescription = false;
         } else if (qName.equals("pubDate")) {
-            parsingDate = false;
             if (thing != null) {
-                thing.parserSetPubDate(Utils.parseDate(tempDate.toString()));
+                thing.parserSetPubDate(Utils.parseDate(tempDate));
             }
-        }
-    }
-
-    //Goes through contents of tags
-    @Override
-    public void characters(char[] ch, int start, int length)
-            throws SAXException {
-        //If parsingTitle is true, then that means we are inside a <title> tag so the text is the title of an item.
-        if (parsingTitle) {
-            if (thing != null)
-                thing.parserSetTitle(new String(ch, start, length));
-        }
-        else if (parsingAuthor) {
-            if (thing != null)
-                thing.parserSetAuthor(new String(ch, start, length));
-        }
-        //If parsingLink is true, then that means we are inside a <link> tag so the text is the link of an item.
-        else if (parsingLink) {
-            if (thing != null)
-                thing.parserSetLink(new String(ch, start, length));
-        }
-        else if (parsingEnclosureLink) {
-            if (thing != null)
-                thing.parserSetEnclosure(new String(ch, start, length));
-        }
-        //If parsingDescription is true, then that means we are inside a <description> tag so the text is the description of an item.
-        else if (parsingDescription) {
-            if (thing != null)
-                thing.parserSetContent(currentTag.peek(), new String(ch, start, length));
-        } else if (parsingDate) {
-            tempDate.append(ch, start, length);
         }
     }
 }

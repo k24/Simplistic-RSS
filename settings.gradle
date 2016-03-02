@@ -1,1 +1,1 @@
-include ':library', ':app'
+include ':simplistic-rss', ':app'

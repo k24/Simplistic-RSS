@@ -30,5 +30,5 @@ dependencies {
     compile 'com.parse.bolts:bolts-tasks:1.4.0'
 
 
-    compile project(':library')
+    compile project(':simplistic-rss')
 }

@@ -118,7 +118,7 @@ public class RssHandler extends DefaultHandler {
     public void endElement(String uri, String localName, String qName)
             throws SAXException {
         currentTag.pop();
-        if (qName.equals("item")) {
+        if (qName.equals("item") || qName.equals("entry")) {
             //End of an item so add the currentItem to the list of items.
             rssItemList.add(currentItem);
             currentItem = null;

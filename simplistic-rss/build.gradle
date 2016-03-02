@@ -1,26 +1,26 @@
 apply plugin: 'com.android.library'
 
 dependencies {
-  compile 'joda-time:joda-time:2.3'
+    compile 'joda-time:joda-time:2.9.2:no-tzdb'
+    compile 'com.squareup.okhttp3:okhttp:3.2.0'
 }
 
 android {
-    compileSdkVersion 19
-    buildToolsVersion '20.0.0'
+    compileSdkVersion 23
+    buildToolsVersion '23.0.2'
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 19
+        targetSdkVersion 23
     }
 }
-
 
 // For archives
 apply plugin: 'com.github.dcendents.android-maven'
 
 // For local install
 group 'com.github.k24'
-version 'legacy'
+version 'okhttp'
 
 // build a jar with source files
 task sourcesJar(type: Jar) {
@@ -29,7 +29,7 @@ task sourcesJar(type: Jar) {
 }
 
 task javadoc(type: Javadoc) {
-    failOnError  false
+    failOnError false
     source = android.sourceSets.main.java.sourceFiles
     classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
 }

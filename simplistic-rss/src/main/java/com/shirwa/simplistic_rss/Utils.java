@@ -1,86 +1,36 @@
 package com.shirwa.simplistic_rss;
 
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.DateTimeFormatterBuilder;
+import org.joda.time.format.DateTimeParser;
 
 public class Utils {
 
-    final static SimpleDateFormat dateFormats[] =
-            new SimpleDateFormat[]{new SimpleDateFormat(
-                    "yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US),
-                    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                            Locale.US),
-                    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.US),
-                    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ",
-                            Locale.US),
-                    new SimpleDateFormat("EEE, d MMM yy HH:mm:ss z", Locale.US),
-                    new SimpleDateFormat("EEE, d MMM yy HH:mm z", Locale.US),
-                    new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z",
-                            Locale.US),
-                    new SimpleDateFormat("EEE, d MMM yyyy HH:mm z", Locale.US),
-                    new SimpleDateFormat("EEE d MMM yy HH:mm:ss z", Locale.US),
-                    new SimpleDateFormat("EEE d MMM yy HH:mm z", Locale.US),
-                    new SimpleDateFormat("EEE d MMM yyyy HH:mm:ss z",
-                            Locale.US),
-                    new SimpleDateFormat("EEE d MMM yyyy HH:mm z", Locale.US),
-                    new SimpleDateFormat("d MMM yy HH:mm z", Locale.US),
-                    new SimpleDateFormat("d MMM yy HH:mm:ss z", Locale.US),
-                    new SimpleDateFormat("d MMM yyyy HH:mm z", Locale.US),
-                    new SimpleDateFormat("d MMM yyyy HH:mm:ss z", Locale.US),
-
-                    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("EEE, d MMM yy HH:mm:ss z",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("EEE, d MMM yy HH:mm z",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("EEE, d MMM yyyy HH:mm z",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("EEE d MMM yy HH:mm:ss z",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("EEE d MMM yy HH:mm z",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("EEE d MMM yyyy HH:mm:ss z",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("EEE d MMM yyyy HH:mm z",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("d MMM yy HH:mm z",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("d MMM yy HH:mm:ss z",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("d MMM yyyy HH:mm z",
-                            Locale.getDefault()),
-                    new SimpleDateFormat("d MMM yyyy HH:mm:ss z",
-                            Locale.getDefault()),};
-    private static final String TAG = "RSS date time formatter";
+    static final DateTimeFormatter FORMATTER = new DateTimeFormatterBuilder()
+            .append(null, new DateTimeParser[]{
+                    DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").getParser(),
+                    DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").getParser(),
+                    DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ").getParser(),
+                    DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ").getParser(),
+                    DateTimeFormat.forPattern("EEE, d MMM yy HH:mm:ss z").getParser(),
+                    DateTimeFormat.forPattern("EEE, d MMM yy HH:mm z").getParser(),
+                    DateTimeFormat.forPattern("EEE, d MMM yyyy HH:mm:ss z").getParser(),
+                    DateTimeFormat.forPattern("EEE, d MMM yyyy HH:mm:ss Z").getParser(),
+                    DateTimeFormat.forPattern("EEE, d MMM yyyy HH:mm z").getParser(),
+                    DateTimeFormat.forPattern("EEE d MMM yy HH:mm:ss z").getParser(),
+                    DateTimeFormat.forPattern("EEE d MMM yy HH:mm z").getParser(),
+                    DateTimeFormat.forPattern("EEE d MMM yyyy HH:mm:ss z").getParser(),
+                    DateTimeFormat.forPattern("EEE d MMM yyyy HH:mm:ss Z").getParser(),
+                    DateTimeFormat.forPattern("EEE d MMM yyyy HH:mm z").getParser(),
+                    DateTimeFormat.forPattern("d MMM yy HH:mm z").getParser(),
+                    DateTimeFormat.forPattern("d MMM yy HH:mm:ss z").getParser(),
+                    DateTimeFormat.forPattern("d MMM yyyy HH:mm z").getParser(),
+                    DateTimeFormat.forPattern("d MMM yyyy HH:mm:ss z").getParser(),
+            }).toFormatter();
 
     static DateTime parseDate(String date) {
-        for (SimpleDateFormat format : dateFormats) {
-            format.setTimeZone(TimeZone.getTimeZone("UTC"));
-            try {
-                Date javadate = format.parse(date);
-                DateTime dt = new DateTime(javadate, DateTimeZone.UTC);
-                return dt;
-            } catch (ParseException e) {
-                //Log.e(TAG, "" + e.getMessage());
-            }
-        }
-
-        return null;
+        return FORMATTER.parseDateTime(date);
     }
-
 }
